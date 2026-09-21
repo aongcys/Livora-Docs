@@ -54,9 +54,9 @@ The application should feel useful first and playful second. Gamification should
 
 ## Database / Backend Services
 
-- Supabase
+- Supabase (PostgreSQL hosting only, not used for auth)
 - PostgreSQL
-- Supabase Auth
+- Custom authentication: the API owns sign-up/login and issues its own token (see section 15)
 - Supabase Storage if file/image storage is needed later
 
 ## Architecture
@@ -782,10 +782,11 @@ The focus session should optionally link to a Task.
 
 Authentication is required to use the application.
 
-Recommended:
+Implementation: custom, not Supabase Auth.
 
-- Supabase Auth
-- Email/password
+- The API owns email/password sign-up and login; credentials live in the `users` table
+- Passwords are hashed (bcrypt/argon2) in `password_hash`, never stored or logged in plain text
+- The API issues its own token (JWT) on login; the backend verifies it on every request
 - OAuth can be added later
 
 ## 15.1 Who can do what
@@ -821,9 +822,7 @@ A user must not be able to:
 - Modify another user's XP
 - Change another user's ranking data
 
-Supabase Row Level Security should be considered an additional protection layer.
-
-The NestJS API must also enforce authorization.
+Not enforced by Supabase Row Level Security — that relies on Supabase Auth, which this project doesn't use. The NestJS API is the only authorization layer; every endpoint must check ownership against the authenticated user from the verified token. See DATABASE.md section 23.
 
 ## 16.1 Roles
 

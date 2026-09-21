@@ -11,7 +11,8 @@ Database:
 
 Authentication:
 
-- Supabase Auth
+- Custom (not Supabase Auth): email + password, hashed with bcrypt/argon2, stored in `users`
+- The API issues and verifies its own JWT
 
 The application database should use UUID primary keys where practical.
 
@@ -29,20 +30,18 @@ Access and tooling:
 - The running app connects through the Supabase **transaction pooler** (`DATABASE_URL`, port 6543)
 - Prisma CLI commands (migrate, studio) use the Supabase **session pooler** (`DIRECT_URL`, port 5432), configured in `prisma.config.ts`
 
-Status: as of 2026-09-20 only the connection is set up. No application tables exist yet; the design below is the plan.
+Status: as of 2026-09-21, `users`, `tasks` and `task_occurrences` are implemented and migrated (see their sections below for the actual shape). Everything else below is still the plan.
 
 ---
 
 # 2. High-Level Relationship
 
 ```text
-auth.users
-    |
-    v
 users
     |
     ├──────── tasks
     │            |
+    │            ├──── task_occurrences
     │            └──── reminders
     │
     ├──────── habits
@@ -65,22 +64,25 @@ users
 
 # 3. users
 
-Application-level user record (the profile of an authenticated account, plus its role).
+Application-level user record. Authentication is custom (not Supabase Auth), so this table also owns the account's credentials.
 
 ```text
 users
 ------------------------------
-id              uuid PK
-username        text UNIQUE
-display_name    text
+id              uuid PK, default gen_random_uuid()
+email           text UNIQUE (partial: WHERE deleted_at IS NULL)
+username        text UNIQUE (partial: WHERE deleted_at IS NULL), display only, not used to log in
+password_hash   text
 avatar_url      text nullable
-timezone        text
-role            user_role
+gender          gender
+timezone        text, default 'Asia/Bangkok'
+role            user_role, default USER
 created_at      timestamptz
 updated_at      timestamptz
+deleted_at      timestamptz nullable (soft delete)
 ```
 
-## Enum
+## Enums
 
 ```text
 user_role
@@ -88,19 +90,17 @@ USER
 ADMIN
 ```
 
-`ADMIN` and `USER` are the same kind of account. The role only controls what the backend allows (for example the user-management endpoints) and which menu items the frontend shows. Visitors who are not logged in have no row here.
-
-`id` should reference:
-
 ```text
-auth.users.id
+gender
+MALE
+FEMALE
 ```
 
-The foreign key to `auth.users` (a table in Supabase's `auth` schema) cannot be expressed in `schema.prisma`, so it is added as raw SQL inside the Prisma migration.
+`ADMIN` and `USER` are the same kind of account. The role only controls what the backend allows (for example the user-management endpoints) and which menu items the frontend shows. Visitors who are not logged in have no row here. `role` defaults to `USER` and must never be set from a client-supplied value; only the backend, acting for an admin, may change it.
 
-Do not duplicate authentication credentials in this table.
+`email`/`username` uniqueness is a **partial** unique index (`WHERE deleted_at IS NULL`), so a soft-deleted account's email/username can be reused by a new account. Prisma cannot express a partial unique index declaratively, so it is added as raw SQL inside the Prisma migration.
 
-The `role` must never be set from a client-supplied value. Only the backend, acting for an admin, may change it.
+`password_hash` must be a proper hash (bcrypt/argon2) — never store or log a plain-text password. `gender` is required at registration; it is used later for the first calorie calculation, so the user isn't asked twice.
 
 ---
 
@@ -111,8 +111,8 @@ Represents user-created tasks/plans.
 ```text
 tasks
 ------------------------------
-id                  uuid PK
-user_id             uuid FK -> users.id
+id                  uuid PK, default gen_random_uuid()
+user_id             uuid FK -> users.id, ON DELETE CASCADE
 name                text
 description         text nullable
 
@@ -120,13 +120,9 @@ date                date nullable
 start_time          time nullable
 end_time            time nullable
 
-is_all_day          boolean
 priority            task_priority
 status              task_status
-category            text nullable
-
 repeat_type         repeat_type
-repeat_config       jsonb nullable
 
 created_at          timestamptz
 updated_at          timestamptz
@@ -159,65 +155,48 @@ MONTHLY
 CUSTOM
 ```
 
-`repeat_config` should contain only recurrence-specific information.
+There is no `is_all_day` column: a task with `start_time`/`end_time` both `null` is an all-day task by definition, so the flag would only duplicate that.
 
-Example:
+There is no `repeat_config` in V1: `WEEKLY` repeats on the same weekday as `date`, which needs no extra config. Add `repeat_config` (nullable jsonb) later, additively, once `CUSTOM`/`MONTHLY` need an explicit pattern (e.g. `{"days": ["MONDAY", "WEDNESDAY"]}`) that can't be inferred from `date` alone.
 
-```json
-{
-  "days": ["MONDAY", "WEDNESDAY", "FRIDAY"]
-}
-```
-
-Do not store derived weekday values redundantly.
+Indexes: `(user_id, date)`, `(user_id, status)`.
 
 ---
 
 # 5. Task Completion
 
-For simple non-recurring tasks, task status may be sufficient.
+For simple non-recurring tasks (`repeat_type = NONE`), `tasks.status` is the source of truth.
 
-For recurring tasks, do not overwrite the base task's status every day.
-
-A recurring task represents a template/rule.
-
-Its individual occurrences should be tracked separately if the implementation requires per-day state.
-
-Recommended future structure:
-
-```text
-tasks
-  |
-  └── task_occurrences
-```
+For recurring tasks (`repeat_type != NONE`), the base task is a template/rule — its `status` is not overwritten per day. Per-day state is tracked separately in `task_occurrences`.
 
 ---
 
 # 6. task_occurrences
 
-Used for recurring task instances.
+Only for recurring tasks. A row exists **only** when a specific date was acted on (completed, cancelled or skipped); it is created lazily, not pre-generated for future dates. A date with no row is still `TODO`, derived from the parent task's `repeat_type` + `date`.
 
 ```text
 task_occurrences
 ------------------------------
-id                  uuid PK
-task_id             uuid FK -> tasks.id
+id                  uuid PK, default gen_random_uuid()
+task_id             uuid FK -> tasks.id, ON DELETE CASCADE
 occurrence_date     date
-start_time          time nullable
-end_time            time nullable
 status              task_occurrence_status
 completed_at        timestamptz nullable
 created_at          timestamptz
 updated_at          timestamptz
 ```
 
-Recommended unique constraint:
+## Enum
 
 ```text
-(task_id, occurrence_date)
+task_occurrence_status
+DONE
+CANCELLED
+SKIPPED
 ```
 
-This prevents duplicate occurrences.
+Unique constraint (also serves as its index): `(task_id, occurrence_date)` — prevents duplicate occurrences.
 
 ---
 
@@ -773,28 +752,15 @@ Do not leave orphaned records.
 
 # 23. Row Level Security
 
-Supabase RLS should be enabled for user-owned tables.
+Not used. Supabase RLS's usual `auth.uid() = user_id` rule only works through Supabase Auth (Postgres reads the caller's JWT claim); this project uses custom auth, and the API connects to Postgres through a single pooled connection with no per-user JWT reaching the database. So RLS is not a working protection layer here.
 
-General rule:
+Authorization is enforced only by the NestJS backend (guards + service-level checks against the authenticated user from the verified token), on every endpoint:
 
-```text
-auth.uid() = user_id
-```
+- Users can only SELECT/INSERT/UPDATE/DELETE their own tasks (and other owned rows)
+- Users cannot directly access another user's private data
+- Public ranking is the exception: users may read aggregated ranking information, but not another user's private task/habit/goal data
 
-Examples:
-
-Users can:
-
-- SELECT their own tasks
-- INSERT their own tasks
-- UPDATE their own tasks
-- DELETE their own tasks
-
-Users cannot directly access another user's private tasks.
-
-Public ranking is different.
-
-Users may read aggregated ranking information, but should not be able to read another user's private task/habit/goal data.
+If per-row database-level enforcement is needed later, it would have to be custom (e.g. setting a session variable per request), not Supabase's built-in `auth.uid()`.
 
 ---
 
@@ -890,7 +856,7 @@ Do not create these tables in V1 unless required.
 
 Every database schema change must be represented by a migration.
 
-Migrations are created with Prisma Migrate (`prisma/migrations`, committed to the Livora-server repo). Things Prisma cannot model, such as the foreign key to `auth.users`, RLS policies and triggers, are written as raw SQL inside the same migration file. Never change the schema by hand in the Supabase dashboard.
+Migrations are created with Prisma Migrate (`prisma/migrations`, committed to the Livora-server repo). Things Prisma cannot model, such as partial unique indexes (see `users`), RLS policies and triggers, are written as raw SQL inside the same migration file. Never change the schema by hand in the Supabase dashboard.
 
 Commands (run from `server/`): `pnpm db:migrate:dev` (create and apply during development), `pnpm db:migrate:deploy` (apply in deployed environments), `pnpm db:migrate:reset` (development only, destroys data), `pnpm db:studio`.
 

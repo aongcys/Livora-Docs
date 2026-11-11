@@ -2,10 +2,12 @@
 
 Specification documents for **Livora** (Daily Life Companion).
 
-| File | Purpose |
+| Path | Purpose |
 | --- | --- |
-| [AGENT.md](AGENT.md) | Product scope, architecture, business rules and development rules |
-| [DATABASE.md](DATABASE.md) | Database design (tables, enums, indexes, RLS, XP and ranking design) |
+| [AGENT.md](AGENT.md) | Start here: project overview, stack, principles, hard rules, and an index of which file to read for which task |
+| [features/](features/) | Feature specs: planner, habits, XP/ranking, goals, dashboard, extras |
+| [conventions/](conventions/) | Auth, API/errors/validation, folder structure, date/time, UX and Definition of Done |
+| [database/](database/README.md) | Database rules plus per-area table definitions |
 
 ## Repositories
 

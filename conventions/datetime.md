@@ -12,7 +12,7 @@ Important cases:
 
 - Recurring habits
 - Daily fortune
-- Weekly ranking
+- Daily group ranking (resets at midnight Thai time)
 - Reminder scheduling
 - Calendar display
 - Day boundaries

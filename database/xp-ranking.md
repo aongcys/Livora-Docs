@@ -33,8 +33,7 @@ amount = 10
 TASK_COMPLETED
 HABIT_COMPLETED
 DAILY_CHECKIN
-GOAL_MILESTONE
-FOCUS_SESSION_COMPLETED
+GOAL_COMPLETED
 ```
 
 The exact XP values should be defined by backend business rules.
@@ -65,48 +64,4 @@ The backend should create XP events atomically with the completion action where 
 
 # 15. Ranking
 
-Do not create a permanent ranking row for every user every time the leaderboard is viewed unless needed for performance.
-
-Weekly ranking can be calculated from:
-
-```text
-xp_events
-```
-
-using the relevant date range.
-
-Example:
-
-```text
-week_start <= created_at < week_end
-```
-
-Then:
-
-```text
-SUM(xp_events.amount)
-GROUP BY user_id
-ORDER BY SUM(amount) DESC
-```
-
-For high scale, a materialized/cached leaderboard can be added later.
-
----
-
-# 16. Ranking Period
-
-Ranking should use a consistent timezone and week boundary.
-
-Recommended fields when storing cached periods:
-
-```text
-ranking_periods
-------------------------------
-id
-period_type
-start_at
-end_at
-created_at
-```
-
-V1 may not need this table if weekly ranking is calculated dynamically.
+The global/weekly ranking was removed. Ranking now happens inside groups and is derived from group tasks completed today; see [features/groups.md](../features/groups.md).

@@ -12,9 +12,8 @@ src/
 │   │   ├── calendar/
 │   │   ├── habits/
 │   │   ├── goals/
-│   │   ├── ranking/
-│   │   ├── calorie/
-│   │   └── focus/
+│   │   ├── groups/
+│   │   └── calorie/
 │   └── ...
 │
 ├── components/
@@ -23,7 +22,7 @@ src/
 │   ├── habit/
 │   ├── goal/
 │   ├── dashboard/
-│   ├── ranking/
+│   ├── group/
 │   └── ...
 │
 ├── lib/
@@ -51,12 +50,11 @@ src/
 ├── reminders/
 ├── habits/
 ├── xp/
-├── ranking/
+├── groups/
 ├── goals/
 ├── dashboard/
 ├── fortune/
 ├── calories/
-├── focus/
 ├── common/        (errors, filters, pipes)
 ├── config/        (environment schema and validation)
 ├── prisma/        (Prisma service and module)

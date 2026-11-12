@@ -7,8 +7,8 @@ General rules and cross-table reference. Table definitions are in the other file
 | [users-tasks.md](users-tasks.md) | users, tasks, task_occurrences (implemented) |
 | [habits-reminders.md](habits-reminders.md) | habits, habit_checkins, streaks, reminders, reminder_deliveries |
 | [goals.md](goals.md) | goals |
-| [xp-ranking.md](xp-ranking.md) | xp_events, XP idempotency, ranking |
-| [extras.md](extras.md) | daily_fortunes, calorie profile/logs, focus_sessions |
+| [xp-ranking.md](xp-ranking.md) | xp_events, XP idempotency |
+| [extras.md](extras.md) | daily_fortunes, calorie profile |
 
 When the schema changes, update the relevant file here and `src/docs-db/schema.mmd` in Livora-server. Section numbers keep the numbering of the original single-file DATABASE.md.
 
@@ -65,11 +65,9 @@ users
     │
     ├──────── xp_events
     │
-    ├──────── focus_sessions
-    │
     ├──────── daily_fortunes
     │
-    └──────── calorie_logs / calorie_targets
+    └──────── calorie_profiles / weight history
 ```
 
 ---
@@ -100,9 +98,6 @@ xp_events(created_at)
 
 daily_fortunes(user_id, fortune_date)
 
-calorie_daily_logs(user_id, log_date)
-
-focus_sessions(user_id, started_at)
 ```
 
 Exact indexes should be adjusted after query patterns are known.
@@ -120,10 +115,8 @@ users
   ├── goals
   ├── reminders
   ├── xp_events
-  ├── focus_sessions
   ├── daily_fortunes
-  ├── calorie_profiles
-  └── calorie_daily_logs
+  └── calorie_profiles
 ```
 
 Child entities should use appropriate `ON DELETE` behavior.
@@ -154,7 +147,7 @@ Authorization is enforced only by the NestJS backend (guards + service-level che
 
 - Users can only SELECT/INSERT/UPDATE/DELETE their own tasks (and other owned rows)
 - Users cannot directly access another user's private data
-- Public ranking is the exception: users may read aggregated ranking information, but not another user's private task/habit/goal data
+- Groups are the exception: members may read the group tasks of groups they belong to, but never another user's personal tasks/habits/goals
 
 If per-row database-level enforcement is needed later, it would have to be custom (e.g. setting a session variable per request), not Supabase's built-in `auth.uid()`.
 
@@ -182,7 +175,7 @@ Responsible for:
 - Streak calculation
 - Goal status transitions
 - Reminder validation
-- Ranking logic
+- Group ranking logic
 - Recurrence logic
 - Authorization
 - API validation
@@ -200,10 +193,7 @@ weekday
 task completion percentage
 habit streak
 goal progress
-total XP
-level
-weekly XP
-ranking
+group ranking
 ```
 
 Cache/materialize only when there is a demonstrated performance need.
@@ -220,8 +210,11 @@ Habit completion
 Goal progress
 → goal current_value / linked progress events if added
 
-Ranking
-→ xp_events within period
+Level / current XP
+→ stored on users, updated in the same transaction as xp_events
+
+Group ranking
+→ group tasks completed today
 ```
 
 ---
@@ -233,8 +226,6 @@ Possible V2 tables:
 ```text
 friends
 friend_requests
-groups
-group_members
 challenges
 challenge_participants
 achievements
@@ -289,7 +280,7 @@ and the corresponding migration.
 7. Use unique constraints to prevent duplicate daily check-ins.
 8. Make XP events idempotent.
 9. Keep recurrence separate from all-day state.
-10. Do not store lifetime ranking as the only ranking mechanism.
+10. Group ranking is derived from completed group tasks, not stored.
 11. Protect user data with RLS.
 12. Do not trust client-provided `user_id`.
 13. Keep business rules in NestJS.

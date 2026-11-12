@@ -1,115 +1,46 @@
-# 12. Daily Fortune
+# Extras: Daily Fortune and Calorie
 
-Daily Fortune is an entertainment feature.
+## Daily Fortune (tarot)
 
-It can provide randomized content such as:
+Entertainment only.
 
-- Overall luck
-- Work
-- Money
-- Health
-- Love
-- Lucky number
-- Lucky color
-- Daily message
+| ID | Requirement |
+| --- | --- |
+| FR-F1 | Press the fortune button on the Dashboard → shake animation → one card in a popup |
+| FR-F2 | Popup shows the card image, card name and overall meaning (Thai / English per UI language) |
+| FR-F3 | Popup footer: "เป็นเพียงการสุ่มเท่านั้น โปรดใช้วิจารณญาณ" / "This is only random. Please use your own judgement." |
 
-The system should treat this as entertainment/random content, not factual prediction.
+Business rules:
 
-### Important
+- Deck: the 22 Major Arcana tarot cards, upright only. Card images are made in-house.
+- One card per day; pressing again the same day shows the same card. The day resets at midnight in the user's timezone.
+- The same card may repeat on other days.
+- No XP. No history; only today's card is visible.
+- Card content is seeded into the system (no admin edit page in V1).
 
-The user should receive one daily result rather than a completely new result every refresh.
+Data needed: `fortune_cards` (name, image, meaning TH/EN) and a daily result (user, date, card), one row per user per day.
 
-Example:
+## Calorie
 
-```text
-User opens on Sep 20
-→ generate/store today's fortune
+Only weight updates and the calories a user can eat per day.
 
-User refreshes
-→ same fortune
+| ID | Requirement |
+| --- | --- |
+| FR-K1 | First-time input: birth date, height, weight, activity level (5 levels); gender comes from the profile. Saved, not asked again |
+| FR-K2 | Show calories per day (TDEE) as the main number and BMR as secondary |
+| FR-K3 | Update weight at any time; recalculated instantly |
+| FR-K4 | Weight history chart |
+| FR-K5 | Edit height / activity level |
 
-Sep 21
-→ new fortune
-```
+Business rules:
 
-This prevents refresh abuse and makes the feature feel like a daily event.
+- BMR uses Mifflin-St Jeor; TDEE = BMR × activity factor.
+- Age is computed from the birth date.
+- No lose / gain goal, no food logging, no UNDER / OVER status, no XP.
+- One weight value per day; entering again the same day replaces it.
 
----
+Data needed: body profile (user, birth date, height, activity level) and weight history (user, date, weight). BMR / TDEE are computed at display time.
 
-# 13. Calorie
+## Removed from scope
 
-V1 should keep calorie functionality lightweight.
-
-### Initial scope
-
-Calculate:
-
-- BMR
-- TDEE
-- Daily calorie target
-
-Input:
-
-- Age
-- Sex
-- Height
-- Weight
-- Activity level
-- Goal
-
-Example:
-
-```text
-BMR
-TDEE
-Target Calories
-```
-
-### Calorie status
-
-The daily calorie page may show:
-
-```text
-UNDER
-ON_TARGET
-OVER
-```
-
-Example:
-
-```text
-Target: 2000 kcal
-Consumed: 2150 kcal
-
-Status: OVER
-```
-
-Do not build a large food database in V1.
-
----
-
-# 14. Focus Time
-
-Focus Time is a lightweight productivity timer.
-
-Example:
-
-```text
-Task: Study Machine Learning
-
-25:00
-
-[ Start ]
-```
-
-Possible V1 timer:
-
-- Start
-- Pause
-- Resume
-- Complete
-- Reset
-
-After a completed focus session, it may award XP.
-
-The focus session should optionally link to a Task.
+- Focus timer (removed 2026-11-13)

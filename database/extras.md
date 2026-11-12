@@ -45,7 +45,6 @@ sex                 calorie_sex
 height_cm           numeric
 weight_kg           numeric
 activity_level      calorie_activity_level
-goal                calorie_goal
 
 created_at          timestamptz
 updated_at          timestamptz
@@ -69,77 +68,6 @@ ACTIVE
 VERY_ACTIVE
 ```
 
-```text
-calorie_goal
-MAINTAIN
-LOSE
-GAIN
-```
-
 The exact calorie formula belongs in backend business logic.
 
----
-
-# 19. Daily Calorie Logs
-
-If users eventually record daily calories:
-
-```text
-calorie_daily_logs
-------------------------------
-id                  uuid PK
-user_id             uuid FK
-log_date            date
-
-target_calories     numeric
-consumed_calories   numeric
-
-status              calorie_status
-
-created_at          timestamptz
-updated_at          timestamptz
-```
-
-Enum:
-
-```text
-UNDER
-ON_TARGET
-OVER
-```
-
-V1 does not require a full food database.
-
----
-
-# 20. Focus Sessions
-
-```text
-focus_sessions
-------------------------------
-id                  uuid PK
-user_id             uuid FK
-
-task_id             uuid nullable FK -> tasks.id
-
-started_at          timestamptz
-ended_at            timestamptz nullable
-
-planned_seconds     integer
-actual_seconds      integer nullable
-
-status              focus_status
-
-created_at          timestamptz
-```
-
-Enum:
-
-```text
-RUNNING
-PAUSED
-COMPLETED
-CANCELLED
-```
-
-A completed session may generate an XP event.
+Pending (from FRS): replace `age` with birth date, and move weight into a weight history table (one value per day). See [features/extras.md](../features/extras.md).

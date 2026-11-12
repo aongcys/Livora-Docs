@@ -1,162 +1,62 @@
-# 4. V1 Feature Scope
+# Planner (Tasks)
 
-## 4.1 Daily Planner
+## Pages
 
-The Daily Planner is one of the primary features.
+- **Today**: today's tasks.
+- **Upcoming**: the next 7 days.
+- **All**: every task, including tasks with no date.
 
-### Core features
+## Functional requirements
 
-- Create task
-- Read task
-- Update task
-- Delete task
-- Drag and drop task
-- View today's tasks
-- View upcoming tasks
-- View all tasks
-- Mark task as done
-- Cancel task
-- Skip recurring task occurrence
-- Set task priority
-- View task details
-- Calendar view
-- Task categories
-- All-day tasks
-- Recurring tasks
+| ID | Requirement |
+| --- | --- |
+| FR-T1 | Create a task: name (required), description, date, start/end time, priority, category, repeat |
+| FR-T2 | View details / edit / delete a task (hard delete, confirm first) |
+| FR-T3 | Mark `DONE`, mark `CANCELLED`, revert to not finished. The user may optionally set `IN_PROGRESS` |
+| FR-T4 | `SKIPPED` is only for a single day of a recurring task |
+| FR-T5 | Drag and drop: on Today, reorder within the day; on All, drag to another date to move it |
+| FR-T6 | Manage own categories: create, rename, change color, delete |
+| FR-T7 | Filter by category, priority and status |
+| FR-T8 | Task History: finished tasks (`DONE` / `CANCELLED` / `SKIPPED`). Today shows today's history; All shows everything with a 1 / 7 / 30 days / all filter, newest first. Status can be reverted from History |
 
-### Task information
+## Flows
 
-A task may contain:
+- **Create:** press add → enter a name (everything else optional) → save → appears on the page matching its date (no date = All only).
+- **Complete:** tick the checkbox → `DONE` → tick again to revert.
+- **Recurring task:** done / skip / cancel applies to that one day only.
+- **Edit a recurring task:** applies from today onward; past days are unchanged.
 
-- Name
-- Description
-- Date
-- Start time
-- End time
-- Priority
-- Category
-- Status
-- All-day flag
-- Repeat configuration
-- Created timestamp
-- Updated timestamp
-
-Do not store a separate `day` field if it can be derived from `date`.
-
-Example:
+## Statuses
 
 ```text
-date = 2026-09-20
-day = Sunday
-```
-
-The weekday should normally be calculated from the date.
-
-### Task status
-
-Recommended initial statuses:
-
-```text
-TODO
-IN_PROGRESS
+TODO         default for a new task
+IN_PROGRESS  optional, set by the user
 DONE
 CANCELLED
-SKIPPED
+SKIPPED      recurring tasks only, per day
 ```
 
-### Priority
+## Business rules
 
-Recommended:
+- No start/end time = all-day task. If a time is given, both start and end are required and end must be after start.
+- A recurring task needs a start date.
+- V1 repeat types: `NONE`, `DAILY`, `WEEKLY`. Weekly can repeat on several chosen weekdays (e.g. Mon / Wed / Fri).
+- Repeat end date is optional; without it the task repeats forever.
+- An unfinished task past its date shows an "overdue" label; its status does not change automatically.
+- Deleting a category keeps its tasks; they simply have no category.
+- Default priority is `MEDIUM` (`LOW` / `MEDIUM` / `HIGH`).
+- Do not store a separate weekday field; derive it from the date.
+- Users only see their own tasks. Group tasks are described in [groups.md](groups.md).
+- XP for completing tasks is described in [xp-level.md](xp-level.md).
 
-```text
-LOW
-MEDIUM
-HIGH
-```
+## Data needed (for DB design)
 
-Avoid overly complex priority systems in V1.
+- `categories` table (name, color, owner) and a category on `tasks`.
+- Repeat weekdays and repeat end date on `tasks`.
+- Sort order within a day (for drag and drop).
+- Finished-at time for non-recurring tasks (for History filtering).
+- `IN_PROGRESS` added to `task_occurrence_status`.
 
-### Recurrence
+## Later (not V1)
 
-Recurrence is separate from `all_day`.
-
-Examples:
-
-```text
-All-day:
-Doctor appointment
-
-Recurring:
-Read 30 minutes every day
-```
-
-Recommended recurrence types:
-
-```text
-NONE
-DAILY
-WEEKLY
-MONTHLY
-CUSTOM
-```
-
-V1 may initially implement NONE, DAILY, and WEEKLY and extend later if necessary.
-
----
-
-# 5. Reminder
-
-Reminder allows users to receive notifications before a task or habit occurs.
-
-### Core features
-
-- Enable / disable reminder
-- Select target
-- Set reminder amount
-- Select reminder unit
-
-Examples:
-
-```text
-15 minutes before
-30 minutes before
-1 hour before
-2 hours before
-```
-
-The reminder system should be designed so that it can target more than only tasks.
-
-Possible targets:
-
-```text
-TASK
-HABIT
-GOAL
-```
-
-### Important design principle
-
-Do not hard-code reminders directly inside the Task model.
-
-Use a generic reminder relationship:
-
-```text
-Reminder
-  -> target_type
-  -> target_id
-```
-
-This allows reminders to expand later.
-
-### Notification states
-
-A reminder may eventually have:
-
-```text
-PENDING
-SENT
-DISMISSED
-FAILED
-```
-
-The exact notification infrastructure may be implemented later.
+- `MONTHLY` and `CUSTOM` repeat

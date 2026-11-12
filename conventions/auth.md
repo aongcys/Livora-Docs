@@ -40,7 +40,7 @@ A user must not be able to:
 - Modify another user's habits
 - Delete another user's goals
 - Modify another user's XP
-- Change another user's ranking data
+- Change another user's group ranking data
 
 Not enforced by Supabase Row Level Security — that relies on Supabase Auth, which this project doesn't use. The NestJS API is the only authorization layer; every endpoint must check ownership against the authenticated user from the verified token. See [database/README.md](../database/README.md) section 23.
 

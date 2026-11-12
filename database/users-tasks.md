@@ -38,6 +38,16 @@ FEMALE
 
 `password_hash` must be a proper hash (bcrypt/argon2) — never store or log a plain-text password. `gender` is required at registration; it is used later for the first calorie calculation, so the user isn't asked twice.
 
+## Pending changes (from FRS, 2026-11-13)
+
+Not applied to the schema yet. Design each change with the db-design skill.
+
+- Add UI language (`en` / `th`, default `en`) — [features/auth.md](../features/auth.md)
+- Add suspended status — [features/auth.md](../features/auth.md)
+- Add level and current XP in the bar, updated in the same transaction as XP events — [features/xp-level.md](../features/xp-level.md)
+- New related table `sessions` (7-day sessions revocable on logout / suspend / delete) — [features/auth.md](../features/auth.md)
+- New related tables for calorie: body profile (birth date, height, activity level) and weight history — [features/extras.md](../features/extras.md)
+
 ---
 
 # 4. tasks
@@ -97,6 +107,17 @@ There is no `repeat_config` in V1: `WEEKLY` repeats on the same weekday as `date
 
 Indexes: `(user_id, date)`, `(user_id, status)`.
 
+## Pending changes (from FRS, 2026-11-13)
+
+Not applied to the schema yet. Design each change with the db-design skill.
+
+- Add category (FK to a new `categories` table: name, color, owner) — [features/planner.md](../features/planner.md)
+- Add repeat weekdays (several weekdays for `WEEKLY`) — replaces the "same weekday as `date`" rule above — [features/planner.md](../features/planner.md)
+- Add repeat end date (nullable = forever) — [features/planner.md](../features/planner.md)
+- Add sort order within a day (drag and drop) — [features/planner.md](../features/planner.md)
+- Add finished-at time for non-recurring tasks (Task History) — [features/planner.md](../features/planner.md)
+- Add group reference (nullable = personal task) and a new group task assignees table — [features/groups.md](../features/groups.md)
+
 ---
 
 # 5. Task Completion
@@ -133,3 +154,11 @@ SKIPPED
 ```
 
 Unique constraint (also serves as its index): `(task_id, occurrence_date)` — prevents duplicate occurrences.
+
+
+## Pending changes (from FRS, 2026-11-13)
+
+Not applied to the schema yet. Design each change with the db-design skill.
+
+- Add `IN_PROGRESS` to `task_occurrence_status` — [features/planner.md](../features/planner.md)
+- Add a moved date for "this day only" moves from the calendar — [features/calendar.md](../features/calendar.md)

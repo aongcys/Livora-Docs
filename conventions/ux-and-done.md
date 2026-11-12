@@ -52,9 +52,8 @@ Examples:
 
 - Planner → information-dense
 - Habit → visual/streak-oriented
-- Ranking → competitive/table-oriented
+- Groups → shared progress, ranking table
 - Dashboard → overview
-- Focus → minimal/distraction-free
 
 ---
 

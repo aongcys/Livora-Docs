@@ -5,7 +5,8 @@ Specification documents for **Livora** (Daily Life Companion).
 | Path | Purpose |
 | --- | --- |
 | [AGENT.md](AGENT.md) | Start here: project overview, stack, principles, hard rules, and an index of which file to read for which task |
-| [features/](features/) | Feature specs: planner, habits, XP/ranking, goals, dashboard, extras |
+| [frs/Livora-FRS-TH.md](frs/Livora-FRS-TH.md) | Functional Requirements Specification (Thai): every V1 feature with FR tables, user flows and business rules |
+| [features/](features/) | Feature specs: auth, planner, calendar, reminders, habits, XP/level, goals, groups, dashboard, extras |
 | [conventions/](conventions/) | Auth, API/errors/validation, folder structure, date/time, UX and Definition of Done |
 | [database/](database/README.md) | Database rules plus per-area table definitions |
 

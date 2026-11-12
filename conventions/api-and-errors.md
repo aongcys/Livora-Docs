@@ -15,12 +15,11 @@ reminders
 habits
 xp
 levels
-ranking
+groups
 goals
 dashboard
 fortune
 calories
-focus
 ```
 
 Example endpoints:
@@ -48,10 +47,9 @@ POST   /goals
 PATCH  /goals/:id
 DELETE /goals/:id
 
-GET    /ranking/weekly
+GET    /groups/:id/ranking/today
 GET    /dashboard
 GET    /fortune/today
-POST   /focus/sessions
 ```
 
 Do not expose database implementation details directly through API contracts.

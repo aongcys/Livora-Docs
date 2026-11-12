@@ -6,12 +6,17 @@ Core project context and hard rules. Detailed specs are split into the files bel
 
 | Task | Read |
 | --- | --- |
-| Tasks, recurrence, reminders | [features/planner.md](features/planner.md), [database/users-tasks.md](database/users-tasks.md), [database/habits-reminders.md](database/habits-reminders.md) |
+| Full functional requirements (Thai FRS, all features) | [frs/Livora-FRS-TH.md](frs/Livora-FRS-TH.md) |
+| Sign up, login, profile, admin | [features/auth.md](features/auth.md), [conventions/auth.md](conventions/auth.md), [database/users-tasks.md](database/users-tasks.md) |
+| Tasks, recurrence, task history | [features/planner.md](features/planner.md), [database/users-tasks.md](database/users-tasks.md) |
+| Calendar, holidays | [features/calendar.md](features/calendar.md) |
+| Reminders, notifications | [features/reminders.md](features/reminders.md), [database/habits-reminders.md](database/habits-reminders.md) |
 | Habits, check-ins, streaks | [features/habits.md](features/habits.md), [database/habits-reminders.md](database/habits-reminders.md) |
-| XP, level, ranking | [features/xp-ranking.md](features/xp-ranking.md), [database/xp-ranking.md](database/xp-ranking.md) |
+| XP, level | [features/xp-level.md](features/xp-level.md), [database/xp-ranking.md](database/xp-ranking.md) |
+| Groups, group tasks, group ranking | [features/groups.md](features/groups.md) |
 | Goals | [features/goals.md](features/goals.md), [database/goals.md](database/goals.md) |
 | Dashboard | [features/dashboard.md](features/dashboard.md) |
-| Fortune, calorie, focus | [features/extras.md](features/extras.md), [database/extras.md](database/extras.md) |
+| Fortune, calorie | [features/extras.md](features/extras.md), [database/extras.md](database/extras.md) |
 | Auth, roles, authorization | [conventions/auth.md](conventions/auth.md), [database/users-tasks.md](database/users-tasks.md) |
 | API routes, validation, error format | [conventions/api-and-errors.md](conventions/api-and-errors.md) |
 | Folder structure (client/server) | [conventions/structure.md](conventions/structure.md) |
@@ -37,18 +42,17 @@ The product combines:
 - Daily check-ins
 - XP / Score
 - Streaks
-- Global ranking
+- Groups (group tasks and in-group ranking)
 - Goals
 - Dashboard
 - Daily fortune
-- Calorie / daily calorie target
-- Focus timer
+- Calorie (weight and daily calories)
 
 The product is not intended to be only a traditional Todo application.
 
 The main product concept is:
 
-> Plan your day → complete activities → build habits → earn XP → maintain streaks → progress toward goals → compare progress through ranking.
+> Plan your day → complete activities → build habits → earn XP → maintain streaks → progress toward goals → compare progress with your group.
 
 The application should feel useful first and playful second. Gamification should encourage consistency without making the application feel like a game that overwhelms the productivity features.
 
@@ -105,7 +109,7 @@ The backend should be responsible for:
 - Authorization
 - XP calculation
 - Streak calculation
-- Ranking calculation
+- Group ranking calculation
 - Goal progress logic
 - Reminder logic
 - Cross-feature operations
@@ -166,7 +170,7 @@ Complete
   ↓
 XP
   ↓
-Level / Ranking / Progress
+Level / Group ranking / Progress
 ```
 
 ## 3.3 Productivity first, gamification second
@@ -179,7 +183,7 @@ Examples of valid XP sources:
 
 - Completing a task
 - Completing a scheduled habit
-- Completing a goal/milestone
+- Completing a goal
 - Daily check-in
 
 Avoid XP exploits such as repeatedly creating and completing fake tasks.
@@ -191,8 +195,7 @@ Do not implement V2/V3 features unless explicitly requested.
 Potential future features:
 
 - Friends
-- Groups
-- Private leaderboards
+- Global leaderboard
 - Challenges
 - AI planning
 - Google Calendar integration
@@ -216,7 +219,7 @@ Important business rules:
 7. A skipped recurring task should not be treated as completed.
 8. Habit streaks depend on the habit schedule.
 9. Daily fortune should be stable for the same user/date.
-10. Ranking should use the defined ranking period.
+10. Group ranking counts group tasks completed today and resets daily at midnight Thai time.
 11. Users cannot access another user's private data.
 12. Deleted entities should not leave broken references.
 
@@ -264,7 +267,7 @@ Goals
 
 ## Phase 7
 
-Ranking
+Groups
 
 ↓
 
@@ -282,7 +285,7 @@ Reminder
 
 ## Phase 10
 
-Fortune / Calorie / Focus
+Fortune / Calorie
 
 This order allows the core data flow to be tested before adding secondary features.
 
